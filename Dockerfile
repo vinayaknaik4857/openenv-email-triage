@@ -8,7 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 ENV PYTHONUNBUFFERED=1
-ENV MOCK_MODE=true
 ENV PORT=7860
 
 EXPOSE 7860
