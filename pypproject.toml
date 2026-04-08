@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
 
 [project]
 name = "openenv-email-triage"
@@ -13,4 +13,8 @@ dependencies = [
   "openai>=1.40.0",
   "pydantic>=2.7.0",
   "uvicorn>=0.30.0",
+  "openenv-core>=0.2.0"
 ]
+
+[project.scripts]
+server = "server.app:main"
