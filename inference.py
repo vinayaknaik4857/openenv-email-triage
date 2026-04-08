@@ -179,9 +179,10 @@ def _run_task(
 
 
 def main() -> None:
-    api_base_url = os.getenv("API_BASE_URL", "https://api.openai.com/v1")
-    model_name = os.getenv("MODEL_NAME", "gpt-4.1-mini")
-    openai_api_key = os.getenv("OPENAI_API_KEY")
+    api_base_url = os.getenv("API_BASE_URL")
+    model_name = os.getenv("MODEL_NAME")
+    api_key = os.getenv("API_KEY") or os.getenv("OPENAI_API_KEY")
+
     _ = os.getenv("HF_TOKEN")
     _ = os.getenv("LOCAL_IMAGE_NAME")
     mock_mode = _is_truthy(os.getenv("MOCK_MODE"))
@@ -191,7 +192,8 @@ def main() -> None:
     if not mock_mode:
         if not openai_api_key:
             raise RuntimeError("Missing OPENAI_API_KEY environment variable.")
-        client = OpenAI(base_url=api_base_url, api_key=openai_api_key)
+        client = OpenAI(base_url=api_base_url, api_key=api_key)
+
 
     env = CustomerSupportEmailTriageEnv()
     all_scores: list[dict[str, Any]] = []
