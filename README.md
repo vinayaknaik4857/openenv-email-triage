@@ -1,3 +1,13 @@
+---
+title: OpenEnv Email Triage
+emoji: 📧
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # OpenEnv: Customer Support Email Triage
 
 Real-world OpenEnv environment where an agent triages customer support emails by:
