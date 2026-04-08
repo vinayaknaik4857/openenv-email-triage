@@ -9,5 +9,9 @@ COPY . .
 
 ENV PYTHONUNBUFFERED=1
 ENV MOCK_MODE=true
+ENV PORT=7860
 
-CMD ["python", "inference.py"]
+EXPOSE 7860
+
+CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-7860}"]
+
