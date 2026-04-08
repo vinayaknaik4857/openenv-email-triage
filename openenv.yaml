@@ -1,0 +1,49 @@
+schema_version: "1.0"
+id: customer-support-email-triage
+name: Customer Support Email Triage
+version: "1.2.0"
+description: Real-world OpenEnv environment for customer support email triage with multi-step grading.
+license: MIT
+authors:
+  - name: Vinayak Naik
+tags:
+  - openenv
+  - customer-support
+  - email-triage
+  - hackathon
+
+environment:
+  module: env.environment
+  class: CustomerSupportEmailTriageEnv
+  observation_model: env.models.Observation
+  action_model: env.models.TriageAction
+  state_model: env.models.EnvState
+  step_result_model: env.models.StepResult
+
+runtime:
+  python: ">=3.11"
+  entrypoint: inference.py
+  supports_container: true
+
+tasks:
+  count: 3
+  difficulties:
+    - easy
+    - medium
+    - hard
+  ids:
+    - triage-easy-001
+    - triage-medium-001
+    - triage-hard-001
+
+reward:
+  min: 0.0
+  max: 1.0
+  shaped: true
+  deterministic: true
+
+required_env:
+  - API_BASE_URL
+  - MODEL_NAME
+  - OPENAI_API_KEY
+  - HF_TOKEN
