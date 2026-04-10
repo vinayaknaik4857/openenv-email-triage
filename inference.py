@@ -10,11 +10,11 @@ from openai import APIError, AuthenticationError, OpenAI, RateLimitError
 from env.environment import CustomerSupportEmailTriageEnv
 from env.models import Observation, TriageAction
 
+def _strict_score(x: float) -> float:
+    return max(0.01, min(0.99, x))
+
 def _to_open_unit_interval(x: float) -> float:
     return min(0.9999, max(0.0001, x))
-
-def _strict_score(x: float) -> float:
-    return min(0.99, max(0.01, x))
 
 def _is_truthy(value: str | None) -> bool:
     if value is None:
