@@ -1,0 +1,25 @@
+name: Sync to Hugging Face Space
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          git config --global user.email "vinaynaikkshatriya@gmail.com"
+          git config --global user.name "vinayaknaik4857"
+
+          git remote add hf https://huggingface.co/vinayaknaik4857:$HF_TOKEN@huggingface.co/spaces/vinayaknaik4857/openenv-email-triage
+
+          git push hf main --force
