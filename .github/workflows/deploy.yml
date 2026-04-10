@@ -20,6 +20,6 @@ jobs:
           git config --global user.email "vinaynaikkshatriya@gmail.com"
           git config --global user.name "vinayaknaik4857"
 
-          git remote add hf https://huggingface.co/vinayaknaik4857:$HF_TOKEN@huggingface.co/spaces/vinayaknaik4857/openenv-email-triage
+          git remote add hf https://vinayaknaik4857:$HF_TOKEN@huggingface.co/spaces/vinayaknaik4857/openenv-email-triage
 
           git push hf main --force
