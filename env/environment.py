@@ -63,7 +63,7 @@ class CustomerSupportEmailTriageEnv:
         self._step_count += 1
 
         if parsed is None:
-            reward_components["invalid_action"] = 0.0
+            reward_components["invalid_action"] = 0.01
         elif parsed.action_type != self._phase:
             self._apply_penalty(notes, "Invalid action for current phase.")
         elif self._phase == "classify":
@@ -88,7 +88,7 @@ class CustomerSupportEmailTriageEnv:
         elif self._phase == "finish":
             completed = self._is_task_completed()
             reward_components["completion"] = 0.99 if completed else 0.01
-            step_reward += 0.1 if completed else 0.0
+            step_reward += 0.09 if completed else 0.0
             if not completed:
                 self._apply_penalty(notes, "Finished without completing all required fields.")
             self._phase = "done"
@@ -100,7 +100,7 @@ class CustomerSupportEmailTriageEnv:
             self._phase = "done"
 
         self._cumulative_reward = max(0.01, min(0.99, self._cumulative_reward + max(0.0, step_reward)))
-        
+
         info = StepInfo(
             task_id=self._current_task.task_id,
             difficulty=self._current_task.difficulty,
@@ -112,7 +112,7 @@ class CustomerSupportEmailTriageEnv:
 
         return StepResult(
             observation=self._build_observation(),
-            reward=round(self._cumulative_reward, 4),
+            reward=max(0.01, min(0.99, round(self._cumulative_reward, 4))),
             done=self._done,
             info=info,
         )
@@ -125,7 +125,7 @@ class CustomerSupportEmailTriageEnv:
             phase=self._phase,  # type: ignore[arg-type]
             step_count=self._step_count,
             max_steps=self._current_task.max_steps if self._current_task else 0,
-            cumulative_reward=round(self._cumulative_reward, 4),
+            cumulative_reward=max(0.01, min(0.99, round(self._cumulative_reward, 4))),
             partial=self._partial,
             penalties=self._penalties,
             available_task_ids=[task.task_id for task in self._tasks],
