@@ -18,7 +18,7 @@ class CustomerSupportEmailTriageEnv:
         self._done: bool = True
         self._phase: str = "done"
         self._step_count: int = 0
-        self._cumulative_reward: float = 0.0
+        self._cumulative_reward: float = 0.01
         self._partial: PartialTriage = PartialTriage()
         self._penalties: int = 0
 
@@ -146,7 +146,7 @@ class CustomerSupportEmailTriageEnv:
     def _apply_penalty(self, notes: list[str], reason: str) -> None:
         self._penalties += 1
         notes.append(reason)
-        self._cumulative_reward = max(0.0, self._cumulative_reward - 0.03)
+        self._cumulative_reward = max(0.01, self._cumulative_reward - 0.03)
 
     def _is_task_completed(self) -> bool:
         return all(
