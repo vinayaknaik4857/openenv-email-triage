@@ -1,3 +1,12 @@
+---
+title: OpenEnv Email Triage
+emoji: 📧
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # OpenEnv Email Triage
 
 `openenv-email-triage` is a real-world OpenEnv benchmark for customer support operations. The agent receives an inbound support email and must complete the same workflow a support lead or triage analyst performs in production: route the email to the right queue, assign business priority, set an SLA, draft a customer-facing reply, and finalize the ticket without wasting steps.
@@ -22,7 +31,7 @@ The environment implements the standard OpenEnv methods:
 - `step(action: TriageAction | dict) -> StepResult`
 - `state() -> EnvState`
 
-Typed models live in [env/models.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/models.py), the environment logic lives in [env/environment.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/environment.py), and metadata lives in [openenv.yaml](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/openenv.yaml).
+Typed models live in [env/models.py](env/models.py), the environment logic lives in [env/environment.py](env/environment.py), and metadata lives in [openenv.yaml](openenv.yaml).
 
 ## Action space
 
@@ -61,7 +70,7 @@ Three deterministic tasks are included, with increasing difficulty:
 3. `triage-hard-001`
    Enterprise access-governance escalation involving former contractors and an impending compliance audit.
 
-Task definitions are in [env/tasks.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/tasks.py).
+Task definitions are in [env/tasks.py](env/tasks.py).
 
 ## Reward design and graders
 
@@ -79,11 +88,11 @@ Partial progress signals:
 - Draft scoring rewards keyword coverage, tone, actionability, and reasonable length.
 - Invalid actions and out-of-order steps apply penalties and reduce the final episode score.
 
-Task graders are deterministic and produce normalized scores in `[0.0, 1.0]`. Grading logic lives in [env/grader.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/grader.py).
+Task graders are deterministic and produce normalized scores in `[0.0, 1.0]`. Grading logic lives in [env/grader.py](env/grader.py).
 
 ## Baseline inference
 
-The required inference script is [inference.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/inference.py). It:
+The required inference script is [inference.py](inference.py). It:
 
 - Uses the OpenAI Python client for all LLM calls
 - Reads `API_BASE_URL`, `MODEL_NAME`, `HF_TOKEN`, and `LOCAL_IMAGE_NAME`
@@ -184,10 +193,10 @@ Before submitting:
 
 ## Repository structure
 
-- [env/environment.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/environment.py): main environment implementation
-- [env/models.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/models.py): typed OpenEnv models
-- [env/tasks.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/tasks.py): deterministic tasks
-- [env/grader.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/env/grader.py): phase and episode graders
-- [server.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/server.py): local entrypoint
-- [server/app.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/server/app.py): Space app
-- [inference.py](/C:/Users/admin/Desktop/VinayPrj/openenv-email-triage/inference.py): baseline runner
+- [env/environment.py](env/environment.py): main environment implementation
+- [env/models.py](env/models.py): typed OpenEnv models
+- [env/tasks.py](env/tasks.py): deterministic tasks
+- [env/grader.py](env/grader.py): phase and episode graders
+- [server.py](server.py): local entrypoint
+- [server/app.py](server/app.py): Space app
+- [inference.py](inference.py): baseline runner
