@@ -11,7 +11,8 @@ from env.environment import CustomerSupportEmailTriageEnv
 from env.models import Observation, TriageAction
 
 def _strict_score(x: float) -> float:
-    return max(0.01, min(0.99, x))
+    # never 0 or 1
+    return max(0.01, min(0.99, float(x)))
 
 def _to_open_unit_interval(x: float) -> float:
     return min(0.9999, max(0.0001, x))
@@ -205,18 +206,13 @@ def main() -> None:
     all_scores: list[dict[str, Any]] = []
 
     print("[START]")
-    for task in env.list_tasks():
-        try:
-            result = _run_task(env, task.task_id, client, model_name)
-            all_scores.append(result)
-            print(f"[STEP] Task {task.task_id} Score: {result['score']:.4f}")
-        except (AuthenticationError, RateLimitError, APIError) as exc:
-            raise RuntimeError(
-                "OpenAI request failed. Check API_BASE_URL/MODEL_NAME/OPENAI_API_KEY or use MOCK_MODE=true."
-            ) from exc
-
-    average = _strict_score(sum(item["score"] for item in all_scores) / len(all_scores))
+    for idx, task in enumerate(env.list_tasks(), start=1):
+        result = _run_task(env, task.task_id, client, model_name)
+        result["score"] = _strict_score(result["score"])
+        all_scores.append(result)
+        print(f"[STEP] Task {idx} Score: {result['score']:.2f}")
     print("[END]")
+
     print(f"Average Score: {average:.4f}")
 
 
