@@ -1,26 +1,46 @@
-id: customer-support-email-triage-v1
-name: customer_support_email_triage
-version: "1.0.0"
-description: "OpenEnv environment for real-world customer support email triage."
-
+id: openenv-email-triage
+name: OpenEnv Email Triage
+version: "1.1.0"
+description: Deterministic customer-support email triage benchmark with real-world queueing, priority, SLA, and response drafting decisions.
 entry_point: env.environment:CustomerSupportEmailTriageEnv
 
-action: TriageAction
-observation: Observation
-state: EnvState
-step_result: StepResult
+models:
+  action: env.models:TriageAction
+  observation: env.models:Observation
+  state: env.models:EnvState
+  step_result: env.models:StepResult
 
-scenarios:
-  - easy
-  - medium
-  - hard
+tasks:
+  - id: triage-easy-001
+    difficulty: easy
+    description: Duplicate billing charge requiring refund triage.
+  - id: triage-medium-001
+    difficulty: medium
+    description: Premium-customer SSO outage affecting multiple users.
+  - id: triage-hard-001
+    difficulty: hard
+    description: Enterprise access-governance escalation before compliance audit.
 
 reward_range:
   min: 0.0
   max: 1.0
 
+capabilities:
+  reset: true
+  step: true
+  state: true
+
+deployment:
+  type: docker
+  healthcheck_path: /
+  reset_path: /reset
+  step_path: /step
+  state_path: /state
+
 tags:
   - openenv
-  - customer-support
   - email-triage
-license: mit
+  - customer-support
+  - huggingface-space
+
+license: MIT

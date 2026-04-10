@@ -30,6 +30,10 @@ def get_tasks() -> list[SupportTask]:
                 response_sla_hours=8,
                 required_response_keywords=["refund", "billing", "update"],
             ),
+            success_notes=[
+                "Customer is asking about a duplicate charge and wants a refund.",
+                "A strong response should acknowledge the billing issue and promise an update.",
+            ],
             max_steps=6,
         ),
         SupportTask(
@@ -58,6 +62,10 @@ def get_tasks() -> list[SupportTask]:
                 response_sla_hours=2,
                 required_response_keywords=["investigate", "eta", "incident"],
             ),
+            success_notes=[
+                "Many affected users and degraded access should drive urgent handling.",
+                "The draft should mention investigation, incident handling, and an ETA commitment.",
+            ],
             max_steps=6,
         ),
         SupportTask(
@@ -86,6 +94,10 @@ def get_tasks() -> list[SupportTask]:
                 response_sla_hours=1,
                 required_response_keywords=["revoke", "audit", "access"],
             ),
+            success_notes=[
+                "This is an access-governance and security escalation for an enterprise account.",
+                "The draft should cover revocation, audit logging, and immediate control review.",
+            ],
             max_steps=7,
         ),
     ]

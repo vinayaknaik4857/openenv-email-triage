@@ -41,6 +41,21 @@ def state() -> dict:
     return {"state": env.state().model_dump()}
 
 
+@app.get("/tasks")
+def tasks() -> dict:
+    return {
+        "tasks": [
+            {
+                "task_id": task.task_id,
+                "difficulty": task.difficulty,
+                "objective": task.objective,
+                "max_steps": task.max_steps,
+            }
+            for task in env.list_tasks()
+        ]
+    }
+
+
 def main() -> None:
     port = int(os.getenv("PORT", "7860"))
     uvicorn.run("server.app:app", host="0.0.0.0", port=port)

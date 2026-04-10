@@ -36,3 +36,18 @@ def step(action: dict) -> dict:
 @app.get("/state")
 def state() -> dict:
     return {"state": env.state().model_dump()}
+
+
+@app.get("/tasks")
+def tasks() -> dict:
+    return {
+        "tasks": [
+            {
+                "task_id": task.task_id,
+                "difficulty": task.difficulty,
+                "objective": task.objective,
+                "max_steps": task.max_steps,
+            }
+            for task in env.list_tasks()
+        ]
+    }

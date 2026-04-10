@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -42,6 +42,7 @@ class SupportTask(BaseModel):
     instructions: str
     email: EmailItem
     target: TriageTarget
+    success_notes: list[str] = Field(default_factory=list)
     max_steps: int = Field(ge=4, le=12, default=6)
 
 
@@ -81,6 +82,9 @@ class Observation(BaseModel):
     partial: PartialTriage
     available_actions: list[ActionType]
     hints: list[str]
+    last_step_reward: float = Field(ge=0.0, le=1.0, default=0.0)
+    cumulative_reward: float = Field(ge=0.0, le=1.0, default=0.0)
+    last_action_error: str | None = None
 
 
 class EnvState(BaseModel):
@@ -93,9 +97,13 @@ class EnvState(BaseModel):
     step_count: int = Field(ge=0)
     max_steps: int = Field(ge=0)
     cumulative_reward: float = Field(ge=0.0, le=1.0)
+    final_score: float = Field(ge=0.0, le=1.0, default=0.0)
+    current_task_difficulty: Difficulty | None = None
     partial: PartialTriage
     penalties: int = Field(ge=0)
     available_task_ids: list[str]
+    last_action_error: str | None = None
+    reward_breakdown: dict[str, float] = Field(default_factory=dict)
 
 
 class StepInfo(BaseModel):
@@ -107,6 +115,7 @@ class StepInfo(BaseModel):
     reward_components: dict[str, float]
     penalties: int = Field(ge=0)
     notes: list[str] = Field(default_factory=list)
+    score: float = Field(ge=0.0, le=1.0, default=0.0)
 
 
 class StepResult(BaseModel):
@@ -115,4 +124,4 @@ class StepResult(BaseModel):
     observation: Observation
     reward: float = Field(ge=0.0, le=1.0)
     done: bool
-    info: dict[str, Any]
+    info: StepInfo
