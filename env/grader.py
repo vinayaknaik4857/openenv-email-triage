@@ -4,7 +4,8 @@ from env.models import SupportTask, TriageAction
 
 
 def _strict(x: float) -> float:
-    return max(0.01, min(0.99, x))
+    return max(0.01, min(0.99, float(x)))
+
 
 
 def _sla_score(predicted_hours: int | None, expected_hours: int) -> float:
