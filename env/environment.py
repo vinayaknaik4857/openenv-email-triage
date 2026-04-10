@@ -27,7 +27,7 @@ class CustomerSupportEmailTriageEnv:
         self._done = False
         self._phase = "classify"
         self._step_count = 0
-        self._cumulative_reward = 0.0
+        self._cumulative_reward = 0.01
         self._partial = PartialTriage()
         self._penalties = 0
 
@@ -99,8 +99,8 @@ class CustomerSupportEmailTriageEnv:
             self._done = True
             self._phase = "done"
 
-        self._cumulative_reward = max(0.0001, min(0.9999, self._cumulative_reward + max(0.0, step_reward)))
-
+        self._cumulative_reward = max(0.01, min(0.99, self._cumulative_reward + max(0.0, step_reward)))
+        
         info = StepInfo(
             task_id=self._current_task.task_id,
             difficulty=self._current_task.difficulty,
