@@ -10,17 +10,14 @@ from openai import APIError, AuthenticationError, OpenAI, RateLimitError
 from env.environment import CustomerSupportEmailTriageEnv
 from env.models import Observation, TriageAction
 
+def _to_open_unit_interval(x: float) -> float:
+    return min(0.9999, max(0.0001, x))
+
 def _strict_score(x: float) -> float:
     # never 0 or 1
     return max(0.01, min(0.99, float(x)))
 
-def _safe_task_score(x: float) -> float:
-    # Strong margin away from 0 and 1
-    return max(0.11, min(0.89, float(x)))
 
-
-def _to_open_unit_interval(x: float) -> float:
-    return min(0.9999, max(0.0001, x))
 
 def _is_truthy(value: str | None) -> bool:
     if value is None:
@@ -187,10 +184,11 @@ def _run_task(
     raw_score = float(final_state["cumulative_reward"])
     return {
         "task_id": task_id,
-        "score": _safe_task_score(float(final_state["cumulative_reward"])),
+        "score": _strict_score(float(final_state["cumulative_reward"])),
         "steps": int(final_state["step_count"]),
         "penalties": int(final_state["penalties"]),
 }
+
 
 
 
@@ -208,23 +206,25 @@ def main() -> None:
             raise RuntimeError("Missing API_KEY/OPENAI_API_KEY environment variable.")
         client = OpenAI(base_url=api_base_url, api_key=api_key)
 
+
     env = CustomerSupportEmailTriageEnv()
     all_scores: list[dict[str, Any]] = []
-    tasks = env.list_tasks()[:3]  # ensure exactly 3 tasks
+    tasks = env.list_tasks()[:3]
     
     for idx, task in enumerate(tasks, start=1):
         print("[START]")
         try:
             result = _run_task(env, task.task_id, client, model_name)
-            result["score"] = _safe_task_score(result["score"])
+            result["score"] = _strict_score(result["score"])
         except Exception:
-            result = {"task_id": task.task_id, "score": 0.11, "steps": 0, "penalties": 0}
+            result = {"task_id": task.task_id, "score": 0.01, "steps": 0, "penalties": 0}
         all_scores.append(result)
         print(f"[STEP] Task {idx} Score: {result['score']:.4f}")
         print("[END]")
     
-    average = _safe_task_score(sum(item["score"] for item in all_scores) / len(all_scores))
+    average = _strict_score(sum(item["score"] for item in all_scores) / len(all_scores)) if all_scores else 0.01
     print(f"Average Score: {average:.4f}")
+
 
 
 
