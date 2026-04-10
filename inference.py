@@ -212,7 +212,7 @@ def main() -> None:
         all_scores.append(result)
         print(f"[STEP] Task {idx} Score: {result['score']:.2f}")
     print("[END]")
-
+    average = _strict_score(sum(item["score"] for item in all_scores) / len(all_scores)) if all_scores else 0.01
     print(f"Average Score: {average:.4f}")
 
 
