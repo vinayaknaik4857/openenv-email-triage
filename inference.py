@@ -207,10 +207,14 @@ def main() -> None:
 
     print("[START]")
     for idx, task in enumerate(env.list_tasks(), start=1):
+    try:
         result = _run_task(env, task.task_id, client, model_name)
         result["score"] = _strict_score(result["score"])
-        all_scores.append(result)
-        print(f"[STEP] Task {idx} Score: {result['score']:.2f}")
+    except Exception:
+        result = {"task_id": task.task_id, "score": 0.01, "steps": 0, "penalties": 0}
+    all_scores.append(result)
+    print(f"[STEP] Task {idx} Score: {result['score']:.2f}")
+
     print("[END]")
     average = _strict_score(sum(item["score"] for item in all_scores) / len(all_scores)) if all_scores else 0.01
     print(f"Average Score: {average:.4f}")
