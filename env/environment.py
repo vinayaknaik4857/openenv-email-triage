@@ -87,7 +87,7 @@ class CustomerSupportEmailTriageEnv:
             self._phase = "finish"
         elif self._phase == "finish":
             completed = self._is_task_completed()
-            reward_components["completion"] = 1.0 if completed else 0.0
+            reward_components["completion"] = 0.99 if completed else 0.01
             step_reward += 0.1 if completed else 0.0
             if not completed:
                 self._apply_penalty(notes, "Finished without completing all required fields.")
