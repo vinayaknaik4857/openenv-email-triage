@@ -99,7 +99,7 @@ class CustomerSupportEmailTriageEnv:
             self._done = True
             self._phase = "done"
 
-        self._cumulative_reward = max(0.0, min(1.0, self._cumulative_reward + max(0.0, step_reward)))
+        self._cumulative_reward = max(0.0001, min(0.9999, self._cumulative_reward + max(0.0, step_reward)))
 
         info = StepInfo(
             task_id=self._current_task.task_id,
