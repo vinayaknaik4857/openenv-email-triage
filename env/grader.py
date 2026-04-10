@@ -4,8 +4,7 @@ from env.models import SupportTask, TriageAction
 
 
 def _clamp(score: float) -> float:
-    return max(0.0, min(1.0, score))
-
+    return max(0.0001, min(0.9999, score))
 
 def _sla_score(predicted_hours: int | None, expected_hours: int) -> float:
     if predicted_hours is None:
@@ -20,9 +19,10 @@ def _sla_score(predicted_hours: int | None, expected_hours: int) -> float:
 
 def grade_classification(task: SupportTask, action: TriageAction) -> tuple[float, dict[str, float]]:
     if action.category is None:
-        return 0.0, {"classification": 0.0}
+        s = _clamp(0.0)
+        return s, {"classification": s}
     correct = action.category == task.target.category
-    score = 1.0 if correct else 0.0
+    score = _clamp(1.0 if correct else 0.0)
     wrong_penalty = 0.08 if not correct else 0.0
     final = _clamp(score - wrong_penalty)
     return final, {"classification": final, "wrong_answer_penalty": wrong_penalty}
