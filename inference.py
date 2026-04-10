@@ -13,6 +13,8 @@ from env.models import Observation, TriageAction
 def _to_open_unit_interval(x: float) -> float:
     return min(0.9999, max(0.0001, x))
 
+def _strict_score(x: float) -> float:
+    return min(0.99, max(0.01, x))
 
 def _is_truthy(value: str | None) -> bool:
     if value is None:
@@ -176,12 +178,13 @@ def _run_task(
             break
 
     final_state = env.state().model_dump()
+    raw_score = float(final_state["cumulative_reward"])
     return {
         "task_id": task_id,
-        "score": _to_open_unit_interval(float(final_state["cumulative_reward"])),
+        "score": _strict_score(raw_score),
         "steps": int(final_state["step_count"]),
         "penalties": int(final_state["penalties"]),
-    }
+}
 
 
 def main() -> None:
@@ -212,7 +215,7 @@ def main() -> None:
                 "OpenAI request failed. Check API_BASE_URL/MODEL_NAME/OPENAI_API_KEY or use MOCK_MODE=true."
             ) from exc
 
-    average = _to_open_unit_interval(sum(item["score"] for item in all_scores) / len(all_scores))
+    average = _strict_score(sum(item["score"] for item in all_scores) / len(all_scores))
     print("[END]")
     print(f"Average Score: {average:.4f}")
 
