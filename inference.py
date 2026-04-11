@@ -9,7 +9,7 @@ from typing import Any
 from openai import OpenAI
 
 from env.environment import CustomerSupportEmailTriageEnv
-from env.models import Observation, TriageAction
+from env.models import ActionType, Category, Observation, Priority, TriageAction
 
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
@@ -19,6 +19,9 @@ BENCHMARK = "openenv-email-triage"
 MAX_STEPS = 6
 TEMPERATURE = 0.0
 MAX_TOKENS = 220
+VALID_ACTION_TYPES: set[ActionType] = {"classify", "prioritize", "draft", "finish"}
+VALID_CATEGORIES: set[Category] = {"billing", "technical", "account", "shipping", "general"}
+VALID_PRIORITIES: set[Priority] = {"low", "medium", "high", "urgent"}
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -36,7 +39,7 @@ def log_step(step: int, action: str, reward: float, done: bool, error: str | Non
 def log_end(success: bool, steps: int, score: float, rewards: list[float]) -> None:
     rewards_text = ",".join(f"{reward:.2f}" for reward in rewards)
     print(
-        f"[END] success={str(success).lower()} steps={steps} score={score:.3f} rewards={rewards_text}",
+        f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_text}",
         flush=True,
     )
 
@@ -152,17 +155,21 @@ def model_action(client: OpenAI | None, observation: Observation) -> dict[str, A
     if client is None:
         return fallback_action(observation)
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME,
-        messages=[
-            {"role": "system", "content": build_system_prompt()},
-            {"role": "user", "content": build_user_prompt(observation)},
-        ],
-        temperature=TEMPERATURE,
-        max_tokens=MAX_TOKENS,
-    )
-    raw = (response.choices[0].message.content or "").strip()
-    parsed = extract_json_object(raw)
+    try:
+        response = client.chat.completions.create(
+            model=MODEL_NAME,
+            messages=[
+                {"role": "system", "content": build_system_prompt()},
+                {"role": "user", "content": build_user_prompt(observation)},
+            ],
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
+        )
+        raw = (response.choices[0].message.content or "").strip()
+        parsed = extract_json_object(raw)
+    except Exception:
+        return fallback_action(observation)
+
     parsed.setdefault("rationale", "LLM policy")
     parsed.setdefault("category", None)
     parsed.setdefault("priority", None)
@@ -170,6 +177,68 @@ def model_action(client: OpenAI | None, observation: Observation) -> dict[str, A
     parsed.setdefault("response_draft", None)
     parsed["action_type"] = observation.phase
     return parsed
+
+
+def _clean_text(value: Any, default: str) -> str:
+    if not isinstance(value, str):
+        return default
+    cleaned = " ".join(value.split()).strip()
+    if not cleaned:
+        return default
+    return cleaned[:2000]
+
+
+def sanitize_action_payload(observation: Observation, payload: dict[str, Any]) -> dict[str, Any]:
+    action_type = observation.phase if observation.phase in VALID_ACTION_TYPES else "finish"
+    category = payload.get("category")
+    priority = payload.get("priority")
+    response_sla_hours = payload.get("response_sla_hours")
+    response_draft = payload.get("response_draft")
+
+    if category not in VALID_CATEGORIES:
+        category = None
+    if priority not in VALID_PRIORITIES:
+        priority = None
+    if not isinstance(response_sla_hours, int) or isinstance(response_sla_hours, bool):
+        response_sla_hours = None
+    elif not 1 <= response_sla_hours <= 168:
+        response_sla_hours = max(1, min(168, response_sla_hours))
+    if not isinstance(response_draft, str):
+        response_draft = None
+    else:
+        response_draft = response_draft.strip()[:4000] or None
+
+    sanitized: dict[str, Any] = {
+        "action_type": action_type,
+        "category": None,
+        "priority": None,
+        "response_sla_hours": None,
+        "response_draft": None,
+        "rationale": _clean_text(payload.get("rationale"), "Automated baseline policy."),
+    }
+    if action_type == "classify":
+        sanitized["category"] = category
+    elif action_type == "prioritize":
+        sanitized["priority"] = priority
+        sanitized["response_sla_hours"] = response_sla_hours
+    elif action_type == "draft":
+        sanitized["response_draft"] = response_draft
+
+    return sanitized
+
+
+def build_triage_action(observation: Observation, payload: dict[str, Any]) -> TriageAction:
+    sanitized = sanitize_action_payload(observation, payload)
+    return TriageAction(
+        task_id=observation.task_id,
+        email_id=observation.email.email_id,
+        action_type=sanitized["action_type"],
+        category=sanitized["category"],
+        priority=sanitized["priority"],
+        response_sla_hours=sanitized["response_sla_hours"],
+        response_draft=sanitized["response_draft"],
+        rationale=sanitized["rationale"],
+    )
 
 
 def action_to_string(action: TriageAction) -> str:
@@ -197,23 +266,27 @@ def run_task(env: CustomerSupportEmailTriageEnv, task_id: str, client: OpenAI | 
             if env.state().done:
                 break
 
+            error_message: str | None = None
+
             try:
                 action_payload = model_action(client, observation)
-            except Exception:
+            except Exception as exc:
                 action_payload = fallback_action(observation)
+                error_message = str(exc)
 
-            action = TriageAction(
-                task_id=observation.task_id,
-                email_id=observation.email.email_id,
-                action_type=action_payload["action_type"],
-                category=action_payload.get("category"),
-                priority=action_payload.get("priority"),
-                response_sla_hours=action_payload.get("response_sla_hours"),
-                response_draft=action_payload.get("response_draft"),
-                rationale=action_payload.get("rationale") or "Automated baseline policy.",
-            )
-            result = env.step(action)
-            observation = result.observation
+            try:
+                action = build_triage_action(observation, action_payload)
+            except Exception as exc:
+                action = build_triage_action(observation, fallback_action(observation))
+                error_message = str(exc)
+
+            try:
+                result = env.step(action)
+                observation = result.observation
+            except Exception as exc:
+                result = env.step(build_triage_action(observation, fallback_action(observation)))
+                observation = result.observation
+                error_message = str(exc)
 
             rewards.append(result.reward)
             steps_taken = step
@@ -222,7 +295,7 @@ def run_task(env: CustomerSupportEmailTriageEnv, task_id: str, client: OpenAI | 
                 action=action_to_string(action),
                 reward=result.reward,
                 done=result.done,
-                error=observation.last_action_error,
+                error=observation.last_action_error or error_message,
             )
 
             if result.done:
@@ -230,6 +303,17 @@ def run_task(env: CustomerSupportEmailTriageEnv, task_id: str, client: OpenAI | 
 
         score = env.grade_current_episode()
         success = score >= 0.7
+        return score
+    except Exception as exc:
+        score = 0.0
+        success = False
+        log_step(
+            step=max(steps_taken + 1, 1),
+            action="internal_error",
+            reward=0.00,
+            done=True,
+            error=str(exc),
+        )
         return score
     finally:
         log_end(success=success, steps=steps_taken, score=score, rewards=rewards)
@@ -239,16 +323,19 @@ def main() -> None:
     _ = LOCAL_IMAGE_NAME
     client: OpenAI | None = None
     if HF_TOKEN:
-        client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+        try:
+            client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+        except Exception:
+            client = None
 
     env = CustomerSupportEmailTriageEnv()
-    task_scores: list[float] = []
     for task in env.list_tasks()[:3]:
-        score = run_task(env, task.task_id, client)
-        task_scores.append(score)
-
-    average = sum(task_scores) / len(task_scores) if task_scores else 0.0
-    print(f"Average Score: {average:.3f}", flush=True)
+        try:
+            run_task(env, task.task_id, client)
+        except Exception:
+            log_start(task=task.task_id, env=BENCHMARK, model=MODEL_NAME)
+            log_step(step=1, action="internal_error", reward=0.00, done=True, error="task_crashed")
+            log_end(success=False, steps=0, score=0.00, rewards=[])
 
 
 if __name__ == "__main__":

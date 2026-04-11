@@ -1,32 +1,32 @@
 .git
-.github
-.gitignore
-
 .venv/
 env/
 venv/
 ENV/
 
 __pycache__/
-**/__pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 .env
 .env.*
 *.local
 
-.idea/
-.vscode/
-.DS_Store
-Thumbs.db
-
 dist/
 build/
 *.egg-info/
+.eggs/
+
+.python-version
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
 
 *.log
