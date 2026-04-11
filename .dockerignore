@@ -3,7 +3,6 @@
 .gitignore
 
 .venv/
-env/
 venv/
 ENV/
 
