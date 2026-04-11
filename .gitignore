@@ -1,5 +1,6 @@
 .git
 .venv/
+.venv_check/
 env/
 venv/
 ENV/

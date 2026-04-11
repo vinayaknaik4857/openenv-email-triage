@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 
-import uvicorn
 from fastapi import FastAPI, HTTPException
+
+# Ensure the repository root is importable even if uvicorn starts from /app/server.
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from env.environment import CustomerSupportEmailTriageEnv
 from env.models import TriageAction
@@ -57,6 +63,8 @@ def tasks() -> dict:
 
 
 def main() -> None:
+    import uvicorn
+
     port = int(os.getenv("PORT", "7860"))
     uvicorn.run("server.app:app", host="0.0.0.0", port=port)
 
